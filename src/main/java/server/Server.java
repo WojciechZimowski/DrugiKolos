@@ -1,6 +1,8 @@
 package server;
 
 import com.almasb.fxgl.net.Client;
+import game.Duel;
+import game.Player;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
@@ -40,6 +42,42 @@ public class Server {
     }
     public void removeClient(ClientHandler client){
         clients.remove(client);
+    }
+    public void challengeToDuel(ClientHandler challenger,String challengeeLogin){
+        for(ClientHandler client : clients){
+            if(challengeeLogin.equals(client.getSavedLogin())){
+                client.sendMessage("You have been challenged by "+client.getSavedLogin());
+                challenger.sendMessage("Challenge sent to"+challengeeLogin);
+
+                startDuel(challenger,client);
+                return;
+            }
+        }
+        challenger.sendMessage("Invalid challenge");
+    }
+    private void startDuel(ClientHandler challenger,ClientHandler challengee){
+        Duel duel = new Duel(challenger,challengee);
+        duel.setOnEnd(()->{
+            Duel.Result result = duel.evaluate();
+            if(result == null){
+                challenger.sendMessage("Draw");
+                challengee.sendMessage("Draw");
+            }else{
+                Player winner = result.winner();
+                Player looser = result.looser();
+
+                ((ClientHandler) winner).sendMessage("Wygrałeś pojedynek!");
+                ((ClientHandler) looser).sendMessage("Przegrałeś pojedynek!");
+                database.updateLeaderboard(((ClientHandler) winner).getSavedLogin(),
+                        ((ClientHandler) looser).getSavedLogin());
+            }
+            System.out.println("=== Leaderboard ===");
+            database.getLeaderboard().forEach((login, points) ->
+                    System.out.println(login + ": " + points));
+            System.out.println("===================");
+        });
+
+
     }
 
     public static void main(String[] args) {

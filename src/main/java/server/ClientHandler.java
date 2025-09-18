@@ -1,11 +1,15 @@
 package server;
 
+import game.Duel;
+import game.Gesture;
+import game.Player;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler extends Player implements Runnable {
     private Socket clientSocket;
     private Server server;
     private PrintWriter out;
@@ -27,17 +31,19 @@ public class ClientHandler implements Runnable {
             out.println("Enter password");
             String password=in.readLine();
             if(! server.getDatabase().authenticate(login,password)){
-
-                closeConnection();
+                clientSocket.close();
                 return;
             }
             this.savedLogin=login;
             out.println("Hello in server!"+savedLogin);
             String msg;
             while((msg=in.readLine())!=null){
-                System.out.println(savedLogin+":"+msg);
-                server.broadcast(savedLogin+": "+msg,this);
-
+                if(isDueling()){
+                    handleDuelMessage(msg);
+                }else {
+                    System.out.println(savedLogin + ":" + msg);
+                    server.challengeToDuel(this, msg);
+                }
             }
         }catch(Exception e){
             System.err.println("Error in ClientHandler");
@@ -63,5 +69,14 @@ public class ClientHandler implements Runnable {
     }
     public String getSavedLogin() {
         return savedLogin;
+    }
+    private void handleDuelMessage(String msg){
+        try{
+            Gesture gesture = Gesture.fromString(msg);
+            makeGesture(gesture);
+            sendMessage("Move:"+gesture);
+        }catch(IllegalArgumentException e){
+            sendMessage("Invalid move");
+        }
     }
 }

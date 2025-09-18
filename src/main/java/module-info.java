@@ -11,6 +11,7 @@ module org.example.drugikolos {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires junit;
+    requires java.sql;
 
     opens org.example.drugikolos to javafx.fxml;
     exports org.example.drugikolos;

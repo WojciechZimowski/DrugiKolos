@@ -5,6 +5,7 @@ public class Duel {
     private Player player2;
     private Gesture gesture1;
     private Gesture gesture2;
+    private Runnable onEnd;
 
     public Duel(Player player1,Player player2){
         this.player1 = player1;
@@ -48,6 +49,9 @@ public class Duel {
         player1.leaveDuel();
         player2.leaveDuel();
         return result;
+    }
+    public void setOnEnd(Runnable onEnd){
+        this.onEnd= onEnd;
     }
 
 }
